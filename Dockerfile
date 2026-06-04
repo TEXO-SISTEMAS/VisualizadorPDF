@@ -22,7 +22,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
     storage/framework/views \
-    && chmod -R 755 storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
