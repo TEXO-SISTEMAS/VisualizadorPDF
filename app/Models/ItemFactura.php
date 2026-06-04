@@ -23,6 +23,8 @@ class ItemFactura extends Model
         'liquido_iva',
     ];
 
+    public $timestamps = false;
+
     protected $casts = [
         'cantidad' => 'decimal:2',
         'precio_unitario' => 'decimal:2',

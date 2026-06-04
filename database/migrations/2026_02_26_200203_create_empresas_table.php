@@ -16,19 +16,14 @@ return new class extends Migration
             $table->string('ruc')->nullable();
             $table->string('dv')->nullable();
             $table->string('direccion')->nullable();
-            $table->string('ciudad')->nullable();
             $table->string('telefono')->nullable();
             $table->string('email')->nullable();
             $table->string('actividad_economica')->nullable();
-            $table->string('desc_actividad')->nullable();
-            $table->string('certificado_path')->nullable();
-            $table->string('certificado_password')->nullable();
-            $table->string('punto_expedicion')->nullable();
-            $table->string('establecimiento')->nullable();
+            $table->timestamp('created_at')->nullable();
             $table->string('numero_timbrado')->nullable();
             $table->date('fecha_inicio_vigencia')->nullable();
-            $table->boolean('activo')->default(true);
-            $table->timestamps();
+            $table->string('tipo_documento_defecto')->nullable();
+            $table->string('ciudad')->nullable();
         });
     }
 

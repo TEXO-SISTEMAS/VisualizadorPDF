@@ -25,7 +25,6 @@ return new class extends Migration
             $table->decimal('tasa_iva', 5, 2)->nullable();
             $table->decimal('base_gravable_iva', 15, 2)->nullable();
             $table->decimal('liquido_iva', 15, 2)->nullable();
-            $table->timestamps();
         });
     }
 

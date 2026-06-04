@@ -16,12 +16,11 @@ return new class extends Migration
             $table->string('ruc')->nullable();
             $table->string('dv')->nullable();
             $table->string('nombre');
-            $table->string('codigo_cliente')->nullable();
             $table->string('direccion')->nullable();
             $table->string('email')->nullable();
             $table->string('telefono')->nullable();
-            $table->string('naturaleza')->nullable();
-            $table->timestamps();
+            $table->string('codigo_cliente')->nullable();
+            $table->timestamp('created_at')->nullable();
         });
     }
 
