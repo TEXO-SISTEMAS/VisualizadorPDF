@@ -20,21 +20,21 @@ class FacturaController extends Controller
 
     if ($empresa) {
         $query->whereHas('empresa', function ($q) use ($empresa) {
-            $q->where('nombre', 'like', "%$empresa%");
+            $q->where('nombre', 'ilike', "%$empresa%");
         });
     }
 
     if ($search) {
         $query->where(function ($q) use ($search) {
-            $q->where('numero', 'like', "%$search%")
+            $q->where('numero', 'ilike', "%$search%")
               ->orWhereHas('cliente', function ($subQ) use ($search) {
-                  $subQ->where('nombre', 'like', "%$search%");
+                  $subQ->where('nombre', 'ilike', "%$search%");
               });
         });
     }
 
     if ($tipo) {
-        $query->where('tipo_documento', 'like', "%$tipo%");
+        $query->where('tipo_documento', 'ilike', "%$tipo%");
     }
 
     return response()->json($query->paginate(10));

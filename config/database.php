@@ -78,20 +78,6 @@ return [
             'sslmode' => 'prefer',
         ],
 
-        'libsql' => [
-            'driver' => 'libsql',
-            'url' => env('DB_DATABASE', database_path('database.sqlite')),
-            'authToken' => env('TURSO_AUTH_TOKEN', ''),
-            'syncUrl' => env('TURSO_DB_URL', ''),
-            'syncInterval' => 5,
-            'read_your_writes' => true,
-            'encryptionKey' => '',
-            'prefix' => '',
-            'database' => null,
-            'remoteOnly' => true,
-            'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-        ],
-
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DATABASE_URL'),
