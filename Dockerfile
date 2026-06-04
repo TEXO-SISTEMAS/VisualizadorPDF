@@ -1,23 +1,13 @@
 FROM php:8.1-apache
 
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    libpq-dev \
     libzip-dev \
     git \
     curl \
     unzip \
-    && apt-get clean
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-    && docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_pgsql \
-    zip \
-    bcmath \
-    ctype \
-    tokenizer \
-    && rm -rf /var/lib/apt/lists/*
+RUN docker-php-ext-install -j$(nproc) pdo zip bcmath
 
 RUN a2enmod rewrite
 
