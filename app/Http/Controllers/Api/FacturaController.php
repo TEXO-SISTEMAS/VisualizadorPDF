@@ -12,7 +12,7 @@ class FacturaController extends Controller
 {
     public function index(Request $request)
 {
-    $empresa = $request->query('empresa');
+    $empresa = $request->query('agencia') ?? $request->query('empresa');
     $search = $request->query('q');
     $tipo = $request->query('tipo');
 
@@ -20,21 +20,21 @@ class FacturaController extends Controller
 
     if ($empresa) {
         $query->whereHas('empresa', function ($q) use ($empresa) {
-            $q->where('nombre', 'ilike', "%$empresa%");
+            $q->where('nombre', 'like', "%$empresa%");
         });
     }
 
     if ($search) {
         $query->where(function ($q) use ($search) {
-            $q->where('numero', 'ilike', "%$search%")
+            $q->where('numero', 'like', "%$search%")
               ->orWhereHas('cliente', function ($subQ) use ($search) {
-                  $subQ->where('nombre', 'ilike', "%$search%");
+                  $subQ->where('nombre', 'like', "%$search%");
               });
         });
     }
 
     if ($tipo) {
-        $query->where('tipo_documento', 'ilike', "%$tipo%");
+        $query->where('tipo_documento', 'like', "%$tipo%");
     }
 
     return response()->json($query->paginate(10));

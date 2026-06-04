@@ -26,13 +26,15 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction 2>&1 | head -20
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions \
+    storage/framework/views \
     && chmod -R 755 storage bootstrap/cache
+
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 80
 
-RUN php artisan key:generate --force || true
-
-CMD ["apache2-foreground"]
+CMD ["/start.sh"]
