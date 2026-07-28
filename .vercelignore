@@ -1,0 +1,10 @@
+backup_datos.sql
+backup_datos.zip
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+tests
+node_modules
+*.csv
+"php fix_items_nc.php"
