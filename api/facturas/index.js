@@ -1,0 +1,75 @@
+import pool from '../../lib/db.js';
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  try {
+    const { empresa, agencia, q, tipo, page = 1 } = req.query;
+    const empresaNombre = empresa || agencia;
+    const perPage = 10;
+    const offset = (parseInt(page) - 1) * perPage;
+
+    const conditions = [];
+    const params = [];
+    let idx = 1;
+
+    if (empresaNombre) {
+      conditions.push(`e.nombre ILIKE $${idx++}`);
+      params.push(`%${empresaNombre}%`);
+    }
+    if (q) {
+      conditions.push(`(f.numero ILIKE $${idx} OR c.nombre ILIKE $${idx})`);
+      params.push(`%${q}%`);
+      idx++;
+    }
+    if (tipo) {
+      conditions.push(`f.tipo_documento ILIKE $${idx++}`);
+      params.push(`%${tipo}%`);
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) as total FROM facturas f
+       JOIN empresas e ON f.empresa_id = e.id
+       JOIN clientes c ON f.cliente_id = c.id ${where}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].total);
+
+    const dataResult = await pool.query(
+      `SELECT f.id, f.numero, f.fecha_emision, f.tipo_documento, f.moneda, f.subtotal, f.total,
+              e.nombre as empresa_nombre, e.ruc as empresa_ruc,
+              c.nombre as cliente_nombre, c.ruc as cliente_ruc
+       FROM facturas f
+       JOIN empresas e ON f.empresa_id = e.id
+       JOIN clientes c ON f.cliente_id = c.id
+       ${where}
+       ORDER BY f.fecha_emision DESC
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, perPage, offset]
+    );
+
+    const facturas = dataResult.rows.map(row => ({
+      id: row.id,
+      numero: row.numero,
+      fecha_emision: row.fecha_emision,
+      tipo_documento: row.tipo_documento,
+      moneda: row.moneda,
+      subtotal: row.subtotal,
+      total: row.total,
+      empresa: { nombre: row.empresa_nombre, ruc: row.empresa_ruc },
+      cliente: { nombre: row.cliente_nombre, ruc: row.cliente_ruc },
+    }));
+
+    res.json({
+      data: facturas,
+      current_page: parseInt(page),
+      last_page: Math.ceil(total / perPage),
+      total,
+      per_page: perPage,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+}

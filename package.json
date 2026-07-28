@@ -29,7 +29,6 @@
     },
     "homepage": "https://github.com/danilososav/visualizadorPDF#readme",
     "dependencies": {
-        "express": "^5.2.1",
-        "puppeteer": "^24.37.5"
+        "pg": "^8.13.0"
     }
 }
