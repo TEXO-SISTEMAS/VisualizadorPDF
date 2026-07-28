@@ -1,4 +1,4 @@
-import pool from '../../../lib/db.js';
+import db from '../../../lib/db.js';
 import { renderFactura } from '../../../lib/template.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -49,7 +49,7 @@ function formatNumber(val, decimals = 0) {
 export default async function handler(req, res) {
   const { id } = req.query;
   try {
-    const facturaResult = await pool.query(
+    const facturaResult = await db.query(
       `SELECT f.*,
         e.nombre as empresa_nombre, e.ruc as empresa_ruc, e.dv as empresa_dv,
         e.numero_timbrado, e.actividad_economica,
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     }
 
     const f = facturaResult.rows[0];
-    const itemsResult = await pool.query(
+    const itemsResult = await db.query(
       'SELECT * FROM items_factura WHERE factura_id = $1 ORDER BY id',
       [id]
     );

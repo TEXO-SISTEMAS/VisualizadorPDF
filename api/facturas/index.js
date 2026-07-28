@@ -1,4 +1,4 @@
-import pool from '../../lib/db.js';
+import db from '../../lib/db.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,25 +10,23 @@ export default async function handler(req, res) {
 
     const conditions = [];
     const params = [];
-    let idx = 1;
 
     if (empresaNombre) {
-      conditions.push(`e.nombre ILIKE $${idx++}`);
+      conditions.push(`e.nombre LIKE ?`);
       params.push(`%${empresaNombre}%`);
     }
     if (q) {
-      conditions.push(`(f.numero ILIKE $${idx} OR c.nombre ILIKE $${idx})`);
-      params.push(`%${q}%`);
-      idx++;
+      conditions.push(`(f.numero LIKE ? OR c.nombre LIKE ?)`);
+      params.push(`%${q}%`, `%${q}%`);
     }
     if (tipo) {
-      conditions.push(`f.tipo_documento ILIKE $${idx++}`);
+      conditions.push(`f.tipo_documento LIKE ?`);
       params.push(`%${tipo}%`);
     }
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const countResult = await pool.query(
+    const countResult = await db.query(
       `SELECT COUNT(*) as total FROM facturas f
        JOIN empresas e ON f.empresa_id = e.id
        JOIN clientes c ON f.cliente_id = c.id ${where}`,
@@ -36,7 +34,7 @@ export default async function handler(req, res) {
     );
     const total = parseInt(countResult.rows[0].total);
 
-    const dataResult = await pool.query(
+    const dataResult = await db.query(
       `SELECT f.id, f.numero, f.fecha_emision, f.tipo_documento, f.moneda, f.subtotal, f.total,
               e.nombre as empresa_nombre, e.ruc as empresa_ruc,
               c.nombre as cliente_nombre, c.ruc as cliente_ruc
@@ -45,7 +43,7 @@ export default async function handler(req, res) {
        JOIN clientes c ON f.cliente_id = c.id
        ${where}
        ORDER BY f.fecha_emision DESC
-       LIMIT $${idx} OFFSET $${idx + 1}`,
+       LIMIT ? OFFSET ?`,
       [...params, perPage, offset]
     );
 

@@ -1,9 +1,9 @@
-import pool from '../lib/db.js';
+import db from '../lib/db.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   try {
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT DISTINCT tipo_documento FROM facturas WHERE tipo_documento IS NOT NULL ORDER BY tipo_documento'
     );
     res.json(result.rows.map(r => r.tipo_documento));

@@ -29,6 +29,7 @@
     },
     "homepage": "https://github.com/danilososav/visualizadorPDF#readme",
     "dependencies": {
-        "pg": "^8.13.0"
+        "@libsql/client": "^0.17.4",
+        "@libsql/client": "^0.14.0"
     }
 }
