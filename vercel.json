@@ -1,6 +1,11 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "",
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "buildCommand": "echo 'no-build'",
+  "functions": {
+    "api/**/*.js": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  }
 }
