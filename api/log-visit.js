@@ -23,6 +23,17 @@ function parseUserAgent(ua) {
   return { dispositivo, navegador, so };
 }
 
+async function getGeo(ip) {
+  try {
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,city,isp,status&lang=es`);
+    const data = await res.json();
+    if (data.status === 'success') {
+      return { pais: data.country, ciudad: data.city, isp: data.isp };
+    }
+  } catch {}
+  return { pais: null, ciudad: null, isp: null };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -36,9 +47,12 @@ export default async function handler(req, res) {
     const { dispositivo, navegador, so } = parseUserAgent(ua);
     const pagina = req.body?.pagina || '/';
 
+    const { pais, ciudad, isp } = await getGeo(ip);
+
     await db.query(
-      `INSERT INTO visitas (ip, dispositivo, navegador, sistema_operativo, pagina) VALUES (?, ?, ?, ?, ?)`,
-      [ip, dispositivo, navegador, so, pagina]
+      `INSERT INTO visitas (ip, dispositivo, navegador, sistema_operativo, pagina, pais, ciudad, isp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [ip, dispositivo, navegador, so, pagina, pais, ciudad, isp]
     );
 
     res.status(200).json({ ok: true });
