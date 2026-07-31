@@ -745,6 +745,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (e.key === 'Enter') buscar();
             });
         });
+
+        // Registro de visita
+        fetch('/api/log-visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pagina: window.location.pathname })
+        }).catch(() => {});
     </script>
 
     <footer style="
