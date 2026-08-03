@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial de Actividad - Texo Sistemas</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+    header { background: #1a1f2e; border-bottom: 1px solid #2d3748; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    header h1 { font-size: 18px; }
+    header span { font-size: 13px; color: #718096; }
+    a.back { color: #63b3ed; font-size: 13px; text-decoration: none; border: 1px solid #2d3748; padding: 5px 12px; border-radius: 6px; }
+    .container { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+    .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end; }
+    .filters input, .filters select { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 6px; color: #e2e8f0; padding: 7px 12px; font-size: 13px; }
+    .filters input:focus, .filters select:focus { outline: none; border-color: #3b82f6; }
+    .btn { padding: 7px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .stat { background: #1a1f2e; border: 1px solid #2d3748; border-radius: 8px; padding: 10px 16px; font-size: 12px; color: #a0aec0; }
+    .stat strong { display: block; font-size: 20px; color: #e2e8f0; margin-bottom: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #1a1f2e; padding: 9px 10px; text-align: left; color: #a0aec0; font-weight: 600; border-bottom: 1px solid #2d3748; white-space: nowrap; }
+    td { padding: 8px 10px; border-bottom: 1px solid #1e2330; vertical-align: top; max-width: 280px; word-break: break-word; }
+    tr:hover td { background: #1a1f2e; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-login       { background: #1e3a5f; color: #63b3ed; }
+    .badge-busqueda    { background: #1e3a2f; color: #68d391; }
+    .badge-ver_factura { background: #3b1f5e; color: #d6bcfa; }
+    .badge-error       { background: #7f1d1d; color: #fca5a5; }
+    .badge-logout      { background: #2d3748; color: #a0aec0; }
+    .ip { font-family: monospace; color: #68d391; font-size: 11px; }
+    .geo { color: #f6ad55; font-size: 11px; }
+    .date { color: #718096; white-space: nowrap; }
+    .detalle { color: #a0aec0; font-size: 11px; }
+    .pagination { display: flex; gap: 6px; margin-top: 16px; justify-content: center; flex-wrap: wrap; }
+    .pagination button { background: #1a1f2e; border: 1px solid #2d3748; color: #e2e8f0; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+    .pagination button.active { background: #3b82f6; border-color: #3b82f6; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .empty { text-align: center; padding: 40px; color: #4a5568; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="/" class="back">← Volver</a>
+    <h1>Historial de Actividad</h1>
+  </div>
+  <span>Texo Sistemas — Panel Administrador</span>
+</header>
+
+<div class="container">
+  <div class="filters">
+    <input type="text" id="f-usuario" placeholder="Buscar usuario..." style="width:200px">
+    <select id="f-accion">
+      <option value="">— Todas las acciones —</option>
+      <option value="login">Login</option>
+      <option value="busqueda">Búsqueda</option>
+      <option value="ver_factura">Ver Factura</option>
+      <option value="error">Error</option>
+    </select>
+    <button class="btn btn-primary" onclick="cargar(1)">Filtrar</button>
+    <button class="btn" style="background:#374151;color:#e2e8f0" onclick="limpiarFiltros()">Limpiar</button>
+    <span id="total-label" style="color:#718096;font-size:13px;margin-left:4px;align-self:center;"></span>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha (UTC)</th>
+        <th>Usuario</th>
+        <th>Acción</th>
+        <th>Detalle</th>
+        <th>IP</th>
+        <th>Ubicación</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <div id="empty" class="empty" style="display:none">Sin registros para los filtros seleccionados</div>
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+  const KEY = new URLSearchParams(location.search).get('key') || '';
+  if (!KEY) { document.body.innerHTML = '<p style="padding:40px;color:#ef4444">Acceso denegado. Usá ?key=texo2024</p>'; }
+
+  let currentPage = 1;
+
+  function formatDetalle(raw) {
+    if (!raw) return '—';
+    try {
+      const d = JSON.parse(raw);
+      const parts = [];
+      if (d.agencia) parts.push(`Agencia: ${d.agencia}`);
+      if (d.q) parts.push(`Nro: ${d.q}`);
+      if (d.tipo) parts.push(`Tipo: ${d.tipo}`);
+      if (d.total !== undefined) parts.push(`Resultados: ${d.total}`);
+      if (d.numero) parts.push(`Factura: ${d.numero}`);
+      if (d.empresa) parts.push(`Empresa: ${d.empresa}`);
+      if (d.cliente) parts.push(`Cliente: ${d.cliente}`);
+      if (d.rol) parts.push(`Rol: ${d.rol}`);
+      if (d.mensaje) parts.push(`Error: ${d.mensaje}`);
+      return parts.length ? parts.join(' | ') : raw;
+    } catch { return raw; }
+  }
+
+  async function cargar(page = 1) {
+    currentPage = page;
+    const usuario = document.getElementById('f-usuario').value.trim();
+    const accion  = document.getElementById('f-accion').value;
+
+    const params = new URLSearchParams({ key: KEY, page });
+    if (usuario) params.append('usuario', usuario);
+    if (accion)  params.append('accion', accion);
+
+    const r = await fetch(`/api/logs?${params}`);
+    if (!r.ok) { document.body.innerHTML = '<p style="padding:40px;color:#ef4444">No autorizado</p>'; return; }
+    const { logs, total, pages } = await r.json();
+
+    document.getElementById('total-label').textContent = `${total} registros`;
+    document.getElementById('empty').style.display = logs.length ? 'none' : 'block';
+
+    // Estadísticas rápidas (solo primera carga sin filtros)
+    if (page === 1 && !usuario && !accion) renderStats(logs);
+
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = logs.map(l => `
+      <tr>
+        <td class="date">${l.id}</td>
+        <td class="date">${l.created_at}</td>
+        <td>
+          <strong style="font-size:12px">${l.usuario_nombre || '—'}</strong><br>
+          <span style="color:#63b3ed;font-size:11px">${l.usuario_email || ''}</span>
+        </td>
+        <td><span class="badge badge-${l.accion}">${l.accion}</span></td>
+        <td class="detalle">${formatDetalle(l.detalle)}</td>
+        <td class="ip">${l.ip || '—'}</td>
+        <td class="geo">${l.pais || ''}${l.ciudad ? ` / ${l.ciudad}` : ''}</td>
+      </tr>
+    `).join('');
+
+    renderPaginacion(pages, page);
+  }
+
+  function renderStats(logs) {
+    const conteo = {};
+    logs.forEach(l => conteo[l.accion] = (conteo[l.accion] || 0) + 1);
+    const nombres = { login: 'Logins', busqueda: 'Búsquedas', ver_factura: 'Facturas vistas', error: 'Errores' };
+    document.getElementById('stats').innerHTML = Object.entries(nombres).map(([k, v]) => `
+      <div class="stat"><strong>${conteo[k] || 0}</strong>${v}</div>
+    `).join('');
+  }
+
+  function renderPaginacion(pages, current) {
+    const div = document.getElementById('pagination');
+    if (pages <= 1) { div.innerHTML = ''; return; }
+    let html = `<button ${current===1?'disabled':''} onclick="cargar(${current-1})">← Ant</button>`;
+    for (let i = Math.max(1,current-3); i <= Math.min(pages,current+3); i++) {
+      html += `<button class="${i===current?'active':''}" onclick="cargar(${i})">${i}</button>`;
+    }
+    html += `<button ${current===pages?'disabled':''} onclick="cargar(${current+1})">Sig →</button>`;
+    div.innerHTML = html;
+  }
+
+  function limpiarFiltros() {
+    document.getElementById('f-usuario').value = '';
+    document.getElementById('f-accion').value = '';
+    cargar(1);
+  }
+
+  document.getElementById('f-usuario').addEventListener('keypress', e => { if (e.key === 'Enter') cargar(1); });
+
+  cargar(1);
+</script>
+</body>
+</html>

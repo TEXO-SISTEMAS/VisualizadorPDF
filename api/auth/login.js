@@ -1,5 +1,6 @@
 import db from '../../lib/db.js';
 import { signToken } from '../../lib/auth.js';
+import { logWithGeo } from '../../lib/logger.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -39,6 +40,16 @@ export default async function handler(req, res) {
     empresa_ids: empresasRes.rows.map(e => e.id),
     empresas: empresasRes.rows.map(e => e.nombre),
   });
+
+  // Registrar login con geolocalización
+  logWithGeo({
+    req,
+    usuario_id: user.id,
+    usuario_email: user.email,
+    usuario_nombre: user.nombre,
+    accion: 'login',
+    detalle: { rol: user.rol },
+  }).catch(() => {});
 
   res.json({ token, nombre: user.nombre, rol: user.rol });
 }

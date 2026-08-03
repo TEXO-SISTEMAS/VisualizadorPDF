@@ -1,5 +1,7 @@
 import db from '../../../lib/db.js';
 import { renderFactura } from '../../../lib/template.js';
+import { getUser, verifyToken } from '../../../lib/auth.js';
+import { log, getIp } from '../../../lib/logger.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -48,6 +50,10 @@ function formatNumber(val, decimals = 0) {
 
 export default async function handler(req, res) {
   const { id } = req.query;
+
+  // Auth — header para fetch, query param para apertura directa en nueva pestaña
+  const user = getUser(req) || (req.query.token ? verifyToken(req.query.token) : null);
+
   try {
     const facturaResult = await db.query(
       `SELECT f.*,
@@ -61,7 +67,7 @@ export default async function handler(req, res) {
        FROM facturas f
        JOIN empresas e ON f.empresa_id = e.id
        JOIN clientes c ON f.cliente_id = c.id
-       WHERE f.id = $1`,
+       WHERE f.id = ?`,
       [id]
     );
 
@@ -71,9 +77,21 @@ export default async function handler(req, res) {
 
     const f = facturaResult.rows[0];
     const itemsResult = await db.query(
-      'SELECT * FROM items_factura WHERE factura_id = $1 ORDER BY id',
+      'SELECT * FROM items_factura WHERE factura_id = ? ORDER BY id',
       [id]
     );
+
+    // Log consulta de factura
+    if (user) {
+      log({
+        usuario_id: user.id,
+        usuario_email: user.email,
+        usuario_nombre: user.nombre,
+        accion: 'ver_factura',
+        detalle: { factura_id: id, numero: f.numero, empresa: f.empresa_nombre, cliente: f.cliente_nombre },
+        ip: getIp(req),
+      }).catch(() => {});
+    }
 
     const items = itemsResult.rows.map((item, index) => ({
       codigo: index + 1,

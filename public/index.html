@@ -453,7 +453,8 @@
             </div>
             <div class="user-info">
                 <span class="user-name" id="userName"></span>
-                <a id="adminLink" href="/admin-usuarios.html?key=texo2024" style="display:none;font-size:0.82rem;color:#63b3ed;text-decoration:none;border:1px solid #2d3748;padding:0.4rem 0.9rem;border-radius:6px;" title="Panel de usuarios">Usuarios</a>
+                <a id="adminLink" href="/admin-usuarios.html?key=texo2024" style="display:none;font-size:0.82rem;color:#63b3ed;text-decoration:none;border:1px solid #2d3748;padding:0.4rem 0.9rem;border-radius:6px;">Usuarios</a>
+                <a id="logsLink" href="/admin-logs.html?key=texo2024" style="display:none;font-size:0.82rem;color:#a78bfa;text-decoration:none;border:1px solid #2d3748;padding:0.4rem 0.9rem;border-radius:6px;">Historial</a>
                 <button class="btn-logout" onclick="logout()">Salir</button>
                 <button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
             </div>
@@ -536,7 +537,10 @@
         const nombre = localStorage.getItem('texo_nombre') || '';
         const rol = localStorage.getItem('texo_rol') || '';
         document.getElementById('userName').textContent = nombre;
-        if (rol === 'admin') document.getElementById('adminLink').style.display = 'inline-block';
+        if (rol === 'admin') {
+            document.getElementById('adminLink').style.display = 'inline-block';
+            document.getElementById('logsLink').style.display = 'inline-block';
+        }
 
         function authHeaders() {
             return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -547,6 +551,14 @@
             localStorage.removeItem('texo_nombre');
             localStorage.removeItem('texo_rol');
             window.location.href = '/login.html';
+        }
+
+        function logEvent(accion, detalle) {
+            fetch('/api/logs', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({ accion, detalle }),
+            }).catch(() => {});
         }
 
         // TEMA OSCURO
@@ -649,6 +661,7 @@
                 const data = await response.json();
                 mostrarResultados(data.data);
                 mostrarPaginacion(data);
+                if (page === 1) logEvent('busqueda', { agencia, q: numeroFactura, tipo, total: data.total });
             } catch (error) {
                 mostrarError('Error al buscar facturas: ' + error.message);
             } finally {
@@ -683,7 +696,8 @@
                     <td>${fecha}</td>
                     <td>${factura.moneda === 'PYG' ? parseFloat(factura.total).toLocaleString('es-PY') + ' PYG' : parseFloat(factura.subtotal).toLocaleString('es-PY', {style: 'currency', currency: 'USD'})}</td>
                     <td>
-                        <a href="/api/facturas/${factura.id}" class="btn-view" target="_blank">
+                        <a href="/api/facturas/${factura.id}?token=${token}" class="btn-view" target="_blank"
+                           onclick="logEvent('ver_factura',{id:${factura.id},numero:'${factura.numero}',empresa:'${factura.empresa.nombre}'})">
                             👁️ Ver PDF
                         </a>
                     </td>
