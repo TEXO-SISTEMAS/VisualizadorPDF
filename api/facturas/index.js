@@ -1,7 +1,13 @@
 import db from '../../lib/db.js';
+import { getUser } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Authorization');
+
+  const user = getUser(req);
+  if (!user) return res.status(401).json({ error: 'No autenticado' });
+
   try {
     const { empresa, agencia, q, tipo, page = 1 } = req.query;
     const empresaNombre = empresa || agencia;
@@ -10,6 +16,13 @@ export default async function handler(req, res) {
 
     const conditions = [];
     const params = [];
+
+    // Restricción por empresas del usuario
+    if (user.rol !== 'admin' && user.empresa_ids && user.empresa_ids.length > 0) {
+      const placeholders = user.empresa_ids.map(() => '?').join(',');
+      conditions.push(`e.id IN (${placeholders})`);
+      params.push(...user.empresa_ids);
+    }
 
     if (empresaNombre) {
       conditions.push(`e.nombre LIKE ?`);
@@ -67,7 +80,6 @@ export default async function handler(req, res) {
       per_page: perPage,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
   }
 }

@@ -111,6 +111,34 @@
             background-color: var(--bg-light);
         }
 
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-name {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #ef4444;
+            border-color: #ef4444;
+            color: white;
+        }
+
         /* MAIN CONTENT */
         .container {
             flex: 1;
@@ -423,7 +451,11 @@
                 </div>
                 <h1 class="app-title">Visualizador de Facturas</h1>
             </div>
-            <button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
+            <div class="user-info">
+                <span class="user-name" id="userName"></span>
+                <button class="btn-logout" onclick="logout()">Salir</button>
+                <button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
+            </div>
         </div>
     </header>
 
@@ -496,6 +528,24 @@
         const API_URL = '/api';
         let currentPage = 1;
 
+        // AUTH
+        const token = localStorage.getItem('texo_token');
+        if (!token) window.location.href = '/login.html';
+
+        const nombre = localStorage.getItem('texo_nombre') || '';
+        document.getElementById('userName').textContent = nombre;
+
+        function authHeaders() {
+            return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+        }
+
+        function logout() {
+            localStorage.removeItem('texo_token');
+            localStorage.removeItem('texo_nombre');
+            localStorage.removeItem('texo_rol');
+            window.location.href = '/login.html';
+        }
+
         // TEMA OSCURO
         const themeToggle = document.getElementById('themeToggle');
         const htmlElement = document.documentElement;
@@ -524,7 +574,8 @@
 
         async function cargarAgencias() {
             try {
-                const response = await fetch('/api/agencias');
+                const response = await fetch('/api/agencias', { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
                 const agencias = await response.json();
 
                 const select = document.getElementById('agencia');
@@ -589,7 +640,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     url += '?' + params.toString();
                 }
 
-                const response = await fetch(url);
+                const response = await fetch(url, { headers: authHeaders() });
+                if (response.status === 401) { logout(); return; }
                 if (!response.ok) throw new Error('Error en la solicitud');
 
                 const data = await response.json();
