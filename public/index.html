@@ -453,6 +453,7 @@
             </div>
             <div class="user-info">
                 <span class="user-name" id="userName"></span>
+                <a id="adminLink" href="/admin-usuarios.html?key=texo2024" style="display:none;font-size:0.82rem;color:#63b3ed;text-decoration:none;border:1px solid #2d3748;padding:0.4rem 0.9rem;border-radius:6px;" title="Panel de usuarios">Usuarios</a>
                 <button class="btn-logout" onclick="logout()">Salir</button>
                 <button class="theme-toggle" id="themeToggle" title="Cambiar tema">🌙</button>
             </div>
@@ -533,7 +534,9 @@
         if (!token) window.location.href = '/login.html';
 
         const nombre = localStorage.getItem('texo_nombre') || '';
+        const rol = localStorage.getItem('texo_rol') || '';
         document.getElementById('userName').textContent = nombre;
+        if (rol === 'admin') document.getElementById('adminLink').style.display = 'inline-block';
 
         function authHeaders() {
             return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
