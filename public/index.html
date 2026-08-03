@@ -568,10 +568,6 @@
         }
 
         // CARGAR AGENCIAS
-        document.addEventListener('DOMContentLoaded', async () => {
-            await cargarAgencias();
-        });
-
         async function cargarAgencias() {
             try {
                 const response = await fetch('/api/agencias', { headers: authHeaders() });
@@ -607,10 +603,13 @@
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await cargarAgencias();
-    await cargarTipos();
-});
+        document.addEventListener('DOMContentLoaded', async () => {
+            await cargarAgencias();
+            await cargarTipos();
+            document.getElementById('buscar').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') buscar();
+            });
+        });
 
         // BUSCAR FACTURAS
         async function buscar(page = 1) {
@@ -790,13 +789,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('pagination').innerHTML = '';
             ocultarError();
         }
-
-        // Enter en el input de búsqueda
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('buscar').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') buscar();
-            });
-        });
 
         // Registro de visita
         fetch('/api/log-visit', {
